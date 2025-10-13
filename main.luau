@@ -16,5 +16,5 @@ local success, err = pcall(function()
 end)
 
 if not success then
-    warn("Failed to load QANTR script:", err)
+    warn("[!] QANTR LOAD FAILURE :: Script execution aborted ->", err);
 end
