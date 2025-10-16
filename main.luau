@@ -1,20 +1,57 @@
 --[[
-                    _        
-                   | |       
-   __ _  __ _ _ __ | |_ _ __ 
-  / _` |/ _` | '_ \| __| '__|
- | (_| | (_| | | | | |_| |   
-  \__, |\__,_|_| |_|\__|_|   
-     | |                     
-     |_|                     
-                             
+ ██████   █████  ███    ██ ████████ ██████  
+██    ██ ██   ██ ████   ██    ██    ██   ██ 
+██    ██ ███████ ██ ██  ██    ██    ██████  
+██ ▄▄ ██ ██   ██ ██  ██ ██    ██    ██   ██ 
+ ██████  ██   ██ ██   ████    ██    ██   ██ 
+    ▀▀          
+----------------------------------------------------------------------------
+  This loader performs environment validation before executing the remote script.
+  Do NOT modify or truncate this script. Use it in full.
+----------------------------------------------------------------------------
 ]]
 
-local url = "https://cdn.quantexcorp.net/qantr-hub/main.luau"
-local success, err = pcall(function()
-    loadstring(game:HttpGet(url, true))()
+if not game:IsLoaded() then return end
+
+local function isFunction(fn) return type(fn) == "function" end
+local CheatEngineMode = false
+
+-- Initialize shared environment
+local env = getgenv and isFunction(getgenv) and getgenv() or {}
+env.shared = env.shared or {}
+env.debug = env.debug or {traceback = function(s) return s end}
+if not isFunction(env.require) then CheatEngineMode = true end
+
+-- Check executor identity
+task.spawn(function()
+    if isFunction(identifyexecutor) then
+        local success, result = pcall(identifyexecutor)
+        local blacklist = {"solara", "cryptic", "xeno", "ember", "ronix"}
+        if success and result then
+            local lowered = string.lower(result)
+            for _, name in ipairs(blacklist) do
+                if string.find(lowered, name) then
+                    CheatEngineMode = true
+                    break
+                end
+            end
+        end
+    end
 end)
 
-if not success then
-    warn("[!] QANTR LOAD FAILURE :: Script execution aborted ->", err);
-end
+-- Check debug functions
+task.spawn(function()
+    local checks = {"getupvalue", "getupvalues", "getconstants", "getproto"}
+    if not CheatEngineMode and type(debug) == "table" then
+        for _, fn in ipairs(checks) do
+            if not isFunction(debug[fn]) then
+                CheatEngineMode = true
+                break
+            end
+        end
+    end
+end)
+
+shared.CheatEngineMode = CheatEngineMode
+
+local t=string.byte;local f=string.char;local c=string.sub;local A=table.concat;local s=math.ldexp;local M=getfenv or function()return _ENV end;local F=setmetatable;local h=select;local d=unpack;local i=tonumber;local function B(t)local e,o,n="","",{}local a=256;local d={}for l=0,a-1 do d[l]=f(l)end;local l=1;local function r()local e=i(c(t,l,l),36)l=l+1;local o=i(c(t,l,l+e-1),36)l=l+e;return o end;e=f(r())n[1]=e;while l<#t do local l=r()if d[l]then o=d[l]else o=e..c(e,1,1)end;d[a]=e..c(o,1,1)n[#n+1],e,a=o,o,a+1 end;return table.concat(n)end;local r=B('22U22S27527622S23227622T27727722U22P276111M1M1B1M22U2202762191A1I15181D1021W1A1H191627H21W1B1221W151M1327Y111A1G1N21W1G1B21W1D1G281121H1A171G1D1B1A22U22Q2761G1T1K1128327B27C24422J27E28V1516181122U22W27613111G1929F151G29729928T27621N21N28I27H22U23027628L28N28P28R2952751K151D1M1N21U2761L27626U2761P27626T2A822S23822S26K2AC29U22S2612AM1Q23G2AI26Y23G22S26C1J23824424B2632AI26C1O2AY24B25T2AI22S1S23G2AZ26R2AU22S1P2382AI2622B81O21W2AZ25T21W2751T23021G22S26X2AM2BG2BP25L2B81Q25O1422S26Y25O2AV1J25G2AZ26325G2AV1O22K2BN22K2BQ2BS22S2722BW2382BP26Y2B81S2BM24B26Y2BP22S112B82CP2BQ2CN2C42B81U2102C326Y2102C72CF2B02CH26C2CR2BN2CV2CX26C2BU2B81T2D12BZ2751U21G26S2C42BT2AW2182CA2182AV2DL2DI26X2DK2B82652B81J22C2CA22C2AV1S21G2BN2BT2CW2AE2761T27626A2EH27626M2761J2302CA29U26C2AD2752AF2752EU22S2EN2751H2AM26W2AM27C22V27622U279275181B15101N1G1M1D1A1322U22O29D1529H22U22R2762181G1G1K1Z29F23128V2EQ24B26L2AM1K2B52CZ22S1L2302E926Y2AM2EI27526Y2A82BE2AT2F122S2CO2762F22GG2AM1H2762GH2F12AM2GD27627F27522U2B822S21N21G21121I2131X21421N1N15121121928J27L26G2761C2FV1K1N22M22322317101A2221L1H1528B111S1727K1K2221A29F2231K2FI27R28J2HR22L1222F1522B1022E2281622A112IE22D1522F1122C162281022K1222B1522E1722D2IO162291022F2IZ1522K1722L1122A1622D1222C102281722E2IH162JE2IY22A2J82J3162JO228122292JF1022B1722K2JQ1522C112JI2J222F2JL2J61522A1722B2231L2HY2FH222182HX1H2A022S1K1727S182FM2EO28628S27N27521R21H21121621C21I21W2142FD1027H21L21W1Y2A329927V28F21W2FC2FE21W1M11191B28J21W1N172FI1K1G22M22Y28V22S2AZ26Q2G12AZ26P2AM1G2B526R2B81K2BB2B62BE1Q2AH22S26E27526C2GS27525Q2A82382E92DN22S1M21W2AI25N2BP2AW2MF2632AU2DD2CS2BO275102242BC224275152B825V2DK2AR22S2622BE2GP22S2F4276');local n=bit and bit.bxor or function(l,o)local e,n=1,0 while l>0 and o>0 do local c,a=l%2,o%2 if c~=a then n=n+e end l,o,e=(l-c)/2,(o-a)/2,e*2 end if l<o then l=o end while l>0 do local o=l%2 if o>0 then n=n+e end l,e=(l-o)/2,e*2 end return n end local function l(o,l,e)if e then local l=(o/2^(l-1))%2^((e-1)-(l-1)+1);return l-l%1;else local l=2^(l-1);return(o%(l+l)>=l)and 1 or 0;end;end;local e=1;local function o()local c,o,l,a=t(r,e,e+3);c=n(c,100)o=n(o,100)l=n(l,100)a=n(a,100)e=e+4;return(a*16777216)+(l*65536)+(o*256)+c;end;local function a()local l=n(t(r,e,e),100);e=e+1;return l;end;local function B()local e=o();local n=o();local c=1;local o=(l(n,1,20)*(2^32))+e;local e=l(n,21,31);local l=((-1)^l(n,32));if(e==0)then if(o==0)then return l*0;else e=1;c=0;end;elseif(e==2047)then return(o==0)and(l*(1/0))or(l*(0/0));end;return s(l,e-1023)*(c+(o/(2^52)));end;local i=o;local function s(l)local o;if(not l)then l=i();if(l==0)then return'';end;end;o=c(r,e,e+l-1);e=e+l;local e={}for l=1,#o do e[l]=f(n(t(c(o,l,l)),100))end return A(e);end;local e=o;local function f(...)return{...},h('#',...)end local function G()local t={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};local e={0,0};local c={};local d={t,nil,e,nil,c};for l=1,o()do e[l-1]=G();end;local e=o()local c={0,0,0,0,0,0,0,0,0,0};for o=1,e do local e=a();local l;if(e==0)then l=(a()~=0);elseif(e==1)then l=B();elseif(e==2)then l=s();end;c[o]=l;end;d[2]=c for a=1,o()do local c=n(o(),117);local o=n(o(),158);local n=l(c,1,2);local e=l(o,1,11);local e={e,l(c,3,11),nil,nil,o};if(n==0)then e[3]=l(c,12,20);e[5]=l(c,21,29);elseif(n==1)then e[3]=l(o,12,33);elseif(n==2)then e[3]=l(o,12,32)-1048575;elseif(n==3)then e[3]=l(o,12,32)-1048575;e[5]=l(c,21,29);end;t[a]=e;end;d[4]=a();return d;end;local function s(l,A,i)local n=l[1];local o=l[2];local e=l[3];local l=l[4];return function(...)local r=n;local t=o;local u=e;local n=l;local S=f local o=1;local c=-1;local C={};local a={...};local f=h('#',...)-1;local B={};local e={};for l=0,f do if(l>=n)then C[l-n]=a[l+1];else e[l]=a[l+1];end;end;local G=f-n+1 local l;local n;while true do l=r[o];n=l[1];if n<=25 then if n<=12 then if n<=5 then if n<=2 then if n<=0 then if(e[l[2]]==t[l[5]])then o=o+1;else o=o+l[3];end;elseif n==1 then local n=l[2];local t={};local o=0;local a=n+l[3]-1;for l=n+1,a do o=o+1;t[o]=e[l];end;local a={e[n](d(t,1,a-n))};local l=n+l[5]-2;o=0;for l=n,l do o=o+1;e[l]=a[o];end;c=l;else do return end;end;elseif n<=3 then e[l[2]]=e[l[3]][t[l[5]]];elseif n==4 then local s;local f;local n;local h;local a;e[l[2]]=e[l[3]][t[l[5]]];o=o+1;l=r[o];a=l[2];h={};n=0;f=a+l[3]-1;for l=a+1,f do n=n+1;h[n]=e[l];end;s={e[a](d(h,1,f-a))};f=a+l[5]-2;n=0;for l=a,f do n=n+1;e[l]=s[n];end;c=f;o=o+1;l=r[o];e[l[2]]=i[t[l[3]]];o=o+1;l=r[o];e[l[2]]=e[l[3]];o=o+1;l=r[o];a=l[2];h={};n=0;f=a+l[3]-1;for l=a+1,f do n=n+1;h[n]=e[l];end;s={e[a](d(h,1,f-a))};f=a+l[5]-2;n=0;for l=a,f do n=n+1;e[l]=s[n];end;c=f;o=o+1;l=r[o];if(e[l[2]]==t[l[5]])then o=o+1;else o=o+l[3];end;else e[l[2]]={};end;elseif n<=8 then if n<=6 then if(e[l[2]]==t[l[5]])then o=o+1;else o=o+l[3];end;elseif n>7 then e[l[2]]=s(u[l[3]],nil,i);else local o=l[2];local n=(l[5]-1)*50;local a=e[o];local l=c-o;for l=1,l do a[n+l]=e[o+l]end;end;elseif n<=10 then if n>9 then local l=l[2];local n=e[l];local o=c-l;for o=1,o do n[o]=e[l+o]end;else e[l[2]]=t[l[3]];end;elseif n>11 then e[l[2]]={};else i[t[l[3]]]=e[l[2]];end;elseif n<=18 then if n<=15 then if n<=13 then local o=l[2];local a={};local n=0;local l=o+l[3]-1;for l=o+1,l do n=n+1;a[n]=e[l];end;e[o](d(a,1,l-o));c=o;elseif n==14 then local l=l[2];do return e[l]();end;else local l=l[2];c=l+G-1;for o=l,c do local l=C[o-l];e[o]=l;end;end;elseif n<=16 then local n=l[2];local c=c;local o={};local l=0;for n=n,c do l=l+1;o[l]=e[n];end;do return d(o,1,l)end;elseif n>17 then e[l[2]]=s(u[l[3]],nil,i);else local n=l[2];local a={};local o=0;local l=n+l[3]-1;for l=n+1,l do o=o+1;a[o]=e[l];end;local a,l=S(e[n](d(a,1,l-n)));l=l+n-1;o=0;for l=n,l do o=o+1;e[l]=a[o];end;c=l;end;elseif n<=21 then if n<=19 then local o=l[2];local c=o+l[3]-2;local n={};local l=0;for o=o,c do l=l+1;n[l]=e[o];end;do return d(n,1,l)end;elseif n==20 then local a=l[2];local n=c;local o={};local l=0;for n=a,n do l=l+1;o[l]=e[n];end;do return d(o,1,l)end;else do return end;end;elseif n<=23 then if n==22 then local l=l[2];local n=e[l];local o=c-l;for o=1,o do n[o]=e[l+o]end;else local B;local n;local s,n;local f;local n;local h;local u;local a;e[l[2]]=i[t[l[3]]];o=o+1;l=r[o];e[l[2]]=i[t[l[3]]];o=o+1;l=r[o];a=l[2];u=e[l[3]];e[a+1]=u;e[a]=u[t[l[5]]];o=o+1;l=r[o];e[l[2]]=A[l[3]];o=o+1;l=r[o];a=l[2];h={};n=0;f=a+l[3]-1;for l=a+1,f do n=n+1;h[n]=e[l];end;s,f=S(e[a](d(h,1,f-a)));f=f+a-1;n=0;for l=a,f do n=n+1;e[l]=s[n];end;c=f;o=o+1;l=r[o];a=l[2];h={};n=0;f=c;for l=a+1,f do n=n+1;h[n]=e[l];end;s={e[a](d(h,1,f-a))};f=a+l[5]-2;n=0;for l=a,f do n=n+1;e[l]=s[n];end;c=f;o=o+1;l=r[o];a=l[2];do return e[a]();end;o=o+1;l=r[o];a=l[2];f=c;B={};n=0;for l=a,f do n=n+1;B[n]=e[l];end;do return d(B,1,n)end;o=o+1;l=r[o];do return end;end;elseif n>24 then e[l[2]]=t[l[3]];else local o=l[2];local l={};local n=c;for o=o+1,n do l[#l+1]=e[o];end;do return e[o](d(l,1,n-o))end;end;elseif n<=38 then if n<=31 then if n<=28 then if n<=26 then local n=l[2];local o=e[l[3]];e[n+1]=o;e[n]=o[t[l[5]]];elseif n==27 then local n=l[2];local a={};local o=0;local t=c;for l=n+1,t do o=o+1;a[o]=e[l];end;local a={e[n](d(a,1,t-n))};local l=n+l[5]-2;o=0;for l=n,l do o=o+1;e[l]=a[o];end;c=l;else local a=u[l[3]];local c;local n={};c=F({},{__index=function(e,l)local l=n[l];return l[1][l[2]];end,__newindex=function(o,l,e)local l=n[l]l[1][l[2]]=e;end;});for c=1,l[5]do o=o+1;local l=r[o];if l[1]==52 then n[c-1]={e,l[3]};else n[c-1]={A,l[3]};end;B[#B+1]=n;end;e[l[2]]=s(a,c,i);end;elseif n<=29 then e[l[2]]=A[l[3]];elseif n==30 then e[l[2]]=e[l[3]][t[l[5]]];else local l=l[2];do return e[l]();end;end;elseif n<=34 then if n<=32 then local o=l[2];local a={};local n=0;local l=o+l[3]-1;for l=o+1,l do n=n+1;a[n]=e[l];end;e[o](d(a,1,l-o));c=o;elseif n>33 then e[l[2]]=i[t[l[3]]];else o=o+l[3];end;elseif n<=36 then if n==35 then e[l[2]]=#e[l[3]];else local l=l[2];c=l+G-1;for o=l,c do local l=C[o-l];e[o]=l;end;end;elseif n==37 then local l=l[2];local o={};local n=c;for l=l+1,n do o[#o+1]=e[l];end;do return e[l](d(o,1,n-l))end;else i[t[l[3]]]=e[l[2]];end;elseif n<=45 then if n<=41 then if n<=39 then local o=l[2];local c=o+l[3]-2;local n={};local l=0;for o=o,c do l=l+1;n[l]=e[o];end;do return d(n,1,l)end;elseif n==40 then local n=l[2];local a={};local o=0;local l=n+l[3]-1;for l=n+1,l do o=o+1;a[o]=e[l];end;local a,l=S(e[n](d(a,1,l-n)));l=l+n-1;o=0;for l=n,l do o=o+1;e[l]=a[o];end;c=l;else e[l[2]]=e[l[3]];end;elseif n<=43 then if n==42 then o=o+l[3];else e[l[2]]=i[t[l[3]]];end;elseif n==44 then e[l[2]]=A[l[3]];else local d=u[l[3]];local a;local n={};a=F({},{__index=function(e,l)local l=n[l];return l[1][l[2]];end,__newindex=function(o,l,e)local l=n[l]l[1][l[2]]=e;end;});for c=1,l[5]do o=o+1;local l=r[o];if l[1]==52 then n[c-1]={e,l[3]};else n[c-1]={A,l[3]};end;B[#B+1]=n;end;e[l[2]]=s(d,a,i);end;elseif n<=48 then if n<=46 then local n=l[2];local o=e[l[3]];e[n+1]=o;e[n]=o[t[l[5]]];elseif n==47 then local n=l[2];local a={};local o=0;local t=c;for l=n+1,t do o=o+1;a[o]=e[l];end;local a={e[n](d(a,1,t-n))};local l=n+l[5]-2;o=0;for l=n,l do o=o+1;e[l]=a[o];end;c=l;else if not e[l[2]]then o=o+1;else o=o+l[3];end;end;elseif n<=50 then if n>49 then e[l[2]]=#e[l[3]];else if not e[l[2]]then o=o+1;else o=o+l[3];end;end;elseif n>51 then e[l[2]]=e[l[3]];else local n=l[2];local t={};local o=0;local a=n+l[3]-1;for l=n+1,a do o=o+1;t[o]=e[l];end;local a={e[n](d(t,1,a-n))};local l=n+l[5]-2;o=0;for l=n,l do o=o+1;e[l]=a[o];end;c=l;end;o=o+1;end;end;end;return s(G(),{},M())();
